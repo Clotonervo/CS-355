@@ -18,10 +18,12 @@ except:
 
 DISPLAY_WIDTH = 500.0
 DISPLAY_HEIGHT = 500.0
-x_position = 0
-y_position = 0
-z_position = 0
-view_degrees = 0
+x_position = -23
+y_position = -16
+z_position = -49
+view_degrees = -53
+tire_display =[{"x":1, "z":1},{"x":-1, "z":1}, {"x":1, "z":-1}, {"x":-1, "z":-1}]
+time = 0
 
 def init(): 
     glClearColor (0.0, 0.0, 0.0, 0.0)
@@ -210,6 +212,30 @@ def drawHouses():
         drawHouse()
         glPopMatrix()
 
+def drawCarStuff():
+    global time
+    # print(time)
+    glPushMatrix()
+    glRotatef(view_degrees, 0, 1, 0)
+    glTranslate(x_position - 30 + time, y_position, 12 + z_position)
+    drawCar()
+    for x in range(0, 4):
+        drawWheel(x)
+    glPopMatrix()
+
+def drawWheel(x):
+    glPushMatrix()
+    global time
+    # print(time)
+    tranformations = tire_display[x]
+    x = tranformations["x"]
+    z = tranformations["z"]
+    glTranslate(2*x, 0, 2*z)
+    glRotatef(time*(-10), 0, 0, 1)
+
+    drawTire()
+    glPopMatrix()
+
 def display():
     glClear (GL_COLOR_BUFFER_BIT)
     glColor3f (1.0, 1.0, 1.0)
@@ -222,12 +248,11 @@ def display():
     global view_degrees
 
     gluPerspective(90.0, 1.0, 0.1, 100.0)
+    glMatrixMode(GL_MODELVIEW)
+
+
     drawHouses()
-    # glPushMatrix()
-    drawCar()
-    glRotatef(view_degrees, 0, 1, 0)
-    glTranslate(x_position + 10, y_position, z_position)
-    # glPopMatrix()
+    drawCarStuff()
 
     glFlush()
     
@@ -238,6 +263,7 @@ def keyboard(key, x, y):
     global y_position
     global z_position
     global view_degrees
+    global time
     
     if key == chr(27):
         import sys
@@ -277,13 +303,21 @@ def keyboard(key, x, y):
 
     if key == b'h':
         # Return to original position
-        glMatrixMode(GL_PROJECTION)
-        x_position = 0
-        y_position = 0
-        z_position = 0
-        view_degrees = 0
+        # glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        x_position = -23
+        y_position = -16
+        z_position = -49
+        view_degrees = -53
+        time = 0
 
     glutPostRedisplay()
+
+def updateTimer(value):
+    global time
+    time = time + 1
+    glutPostRedisplay()
+    glutTimerFunc(300, updateTimer, 0)
 
 
 glutInit(sys.argv)
@@ -294,4 +328,5 @@ glutCreateWindow (b'OpenGL Lab')
 init ()
 glutDisplayFunc(display)
 glutKeyboardFunc(keyboard)
+glutTimerFunc(1, updateTimer,0)
 glutMainLoop()
