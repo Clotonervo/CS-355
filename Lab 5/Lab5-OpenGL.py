@@ -12,6 +12,7 @@ try:
     from OpenGL.GL import glMatrixMode
     from OpenGL.GL import GL_MODELVIEW
     from OpenGL.GL import GL_PROJECTION
+    import math
 except:
     print("ERROR: PyOpenGL not installed properly. ")
 
@@ -19,9 +20,9 @@ DISPLAY_WIDTH = 500.0
 DISPLAY_HEIGHT = 500.0
 isPerspective = True
 isOrtho = False
-x_position = 0
-y_position = 0
-z_position = 0
+x_position = 0.0
+y_position = 0.0
+z_position = 0.0
 view_degrees = 0
 
 def init(): 
@@ -119,12 +120,14 @@ def keyboard(key, x, y):
         sys.exit(0)
   
     if key == b'w':
-        z_position = z_position + 1
+        z_position = z_position + math.cos(math.radians(view_degrees))
+        x_position = x_position - math.sin(math.radians(view_degrees))
         # Zoom in
 
     if key == b's':
         # Zoom out
-        z_position = z_position - 1
+        z_position = z_position - math.cos(math.radians(view_degrees))
+        x_position = x_position + math.sin(math.radians(view_degrees))
 
     if key == b'r':
         # Pan up
@@ -136,11 +139,13 @@ def keyboard(key, x, y):
 
     if key == b'a':
         # Pan left
-        x_position = x_position + 1
+        z_position = z_position + math.cos(math.radians(view_degrees - 90))
+        x_position = x_position - math.sin(math.radians(view_degrees - 90))
 
     if key == b'd':
         # Pan right
-        x_position = x_position - 1
+        z_position = z_position + math.cos(math.radians(view_degrees + 90))
+        x_position = x_position - math.sin(math.radians(view_degrees + 90))
 
     if key == b'q':
         # look left

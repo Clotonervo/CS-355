@@ -13,6 +13,7 @@ try:
     from OpenGL.GL import GL_MODELVIEW
     from OpenGL.GL import GL_PROJECTION
     import Lab6Models
+    import math
 except:
     print("ERROR: PyOpenGL not installed properly. ")
 
@@ -22,8 +23,9 @@ x_position = -23
 y_position = -16
 z_position = -49
 view_degrees = -53
-tire_display =[{"x":1, "z":1},{"x":-1, "z":1}, {"x":1, "z":-1}, {"x":-1, "z":-1}]
 time = 0
+
+tire_display =[{"x":1, "z":1},{"x":-1, "z":1}, {"x":1, "z":-1}, {"x":-1, "z":-1}]
 
 def init(): 
     glClearColor (0.0, 0.0, 0.0, 0.0)
@@ -189,8 +191,8 @@ def drawHouses():
     for x in range(0, 3):
         glPushMatrix()
         x_offset = 15 * x
-        glRotatef(view_degrees, 0, 1, 0)
-        glTranslate(0 + x_position - x_offset, 0 + y_position, 0 + z_position)
+        # glRotatef(view_degrees, 0, 1, 0)
+        glTranslate(0 - x_offset, 0, 0)
         drawHouse()
         glPopMatrix()
 
@@ -198,8 +200,8 @@ def drawHouses():
     for x in range(0, 3):
         glPushMatrix()
         z_offset = 15 * x
-        glRotatef(90 + view_degrees, 0, 1, 0)
-        glTranslate(-40 - z_position + z_offset, 0 + y_position, -50 + x_position)
+        glRotatef(90, 0, 1, 0)
+        glTranslate(-40 + z_offset, 0, -50)
         drawHouse()
         glPopMatrix()
 
@@ -207,17 +209,16 @@ def drawHouses():
     for x in range(0, 3):
         glPushMatrix()
         x_offset = 15 * x
-        glRotatef(180 + view_degrees, 0, 1, 0)
-        glTranslate(0 - x_position + x_offset, 0 + y_position, -50 - z_position)
+        glRotatef(180, 0, 1, 0)
+        glTranslate(0 + x_offset, 0, -50)
         drawHouse()
         glPopMatrix()
 
 def drawCarStuff():
     global time
-    # print(time)
+
     glPushMatrix()
-    glRotatef(view_degrees, 0, 1, 0)
-    glTranslate(x_position - 30 + time, y_position, 12 + z_position)
+    glTranslate(-30 + time, 0, 12)
     drawCar()
     for x in range(0, 4):
         drawWheel(x)
@@ -248,8 +249,11 @@ def display():
     global view_degrees
 
     gluPerspective(90.0, 1.0, 0.1, 100.0)
-    glMatrixMode(GL_MODELVIEW)
 
+    glRotatef(view_degrees, 0, 1, 0)
+    glTranslatef(x_position, y_position, z_position)
+
+    glMatrixMode(GL_MODELVIEW)
 
     drawHouses()
     drawCarStuff()
@@ -268,14 +272,16 @@ def keyboard(key, x, y):
     if key == chr(27):
         import sys
         sys.exit(0)
-  
+
     if key == b'w':
-        z_position = z_position + 1
+        z_position = z_position + math.cos(math.radians(view_degrees))
+        x_position = x_position - math.sin(math.radians(view_degrees))
         # Zoom in
 
     if key == b's':
         # Zoom out
-        z_position = z_position - 1
+        z_position = z_position - math.cos(math.radians(view_degrees))
+        x_position = x_position + math.sin(math.radians(view_degrees))
 
     if key == b'r':
         # Pan up
@@ -287,11 +293,13 @@ def keyboard(key, x, y):
 
     if key == b'a':
         # Pan left
-        x_position = x_position + 1
+        z_position = z_position + math.cos(math.radians(view_degrees - 90))
+        x_position = x_position - math.sin(math.radians(view_degrees - 90))
 
     if key == b'd':
         # Pan right
-        x_position = x_position - 1
+        z_position = z_position + math.cos(math.radians(view_degrees + 90))
+        x_position = x_position - math.sin(math.radians(view_degrees + 90))
 
     if key == b'q':
         # look left
