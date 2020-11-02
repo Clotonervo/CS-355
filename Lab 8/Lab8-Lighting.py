@@ -9,7 +9,6 @@ import basicShapes as shape
 
 z_rotation = 0
 x_rotation = 0
-y_rotation = 0
 
 class WireframeViewer(wf.WireframeGroup):
     """ A group of wireframes which can be displayed on a Pygame screen """
@@ -53,10 +52,11 @@ class WireframeViewer(wf.WireframeGroup):
             self.addWireframe(name, wireframe)
 
     def calculateReflectionVector(self, l, n):
-        r = 2*(np.matmul(l,n))*n - l
+        r = (2*self.getDot(l,n)*n) - l
         return r
 
-
+    def getDot(self, l, n):
+        return np.dot(l,n)
     
     def display(self):
         self.screen.fill(self.background)
@@ -77,15 +77,24 @@ class WireframeViewer(wf.WireframeGroup):
                     if towards_us > 0:
                         m_ambient = 0.1
                         ambient = self.light_color * (m_ambient * colour)
-                        s_direct = 0.9
-                        diffuse = (s_direct * colour) * np.dot(normal, self.light_vector)
-                        m_spec = np.array([0.5, 0.5, 0.5])
+                        m_diff = 0.4
+                        diffuse = (m_diff * colour) * self.getDot(self.light_vector, normal)
+
+                        m_spec = 0.4
                         m_gls = 4
-                        r = self.calculateReflectionVector(self.light_vector, normal)
-                        specular = (s_direct * m_spec) * math.pow(np.dot(self.view_vector, r), m_gls)
+                        r = (2 * np.dot(self.light_vector, normal) * normal) - self.light_vector
+                        dot = np.dot(self.view_vector, r)
+                        specular = (m_spec * colour) * (math.pow(dot, m_gls))
+
+                        if dot < 0:
+                            specular = [0, 0, 0]
+
+                        if self.getDot(self.light_vector, normal) < 0:
+                            specular = [0, 0, 0]
+                            diffuse = [0, 0, 0]
 
                         light_total = ambient + diffuse + specular
-
+                        light_total = np.clip(light_total, 0, 255)
                         pygame.draw.polygon(self.screen, light_total, [(nodes[node][0], nodes[node][1]) for node in face], 0)
 
                 if self.displayEdges:
@@ -111,59 +120,72 @@ class WireframeViewer(wf.WireframeGroup):
         pygame.display.flip()
 
     def keyEvent(self, key):
-        global y_rotation
 
         if key == pygame.K_a:
-            y_rotation += 1
-            view_vector = [self.view_vector[0], self.view_vector[1], self.view_vector[2], 1]
-            y_matrix = np.array([[math.cos(math.radians(y_rotation)),0,math.sin(math.radians(y_rotation)),0],
-                                [0,1,0,0],
-                                [-math.sin(math.radians(y_rotation)),0,math.cos(math.radians(y_rotation)),0],
-                                [0,0,0,1]])
-            view_vector = np.matmul(view_vector, y_matrix)
-            self.view_vector = [view_vector[0], view_vector[1], view_vector[2]]
-
-        if key == pygame.K_d:
-            y_rotation -= 1
-            view_vector = [self.view_vector[0], self.view_vector[1], self.view_vector[2], 1]
+            y_rotation = -5
+            light_vector = [self.light_vector[0], self.light_vector[1], self.light_vector[2], 1]
             y_matrix = np.array([[math.cos(math.radians(y_rotation)), 0, math.sin(math.radians(y_rotation)), 0],
                                  [0, 1, 0, 0],
                                  [-math.sin(math.radians(y_rotation)), 0, math.cos(math.radians(y_rotation)), 0],
                                  [0, 0, 0, 1]])
-            light_vector = np.matmul(view_vector, y_matrix)
-            self.view_vector = [view_vector[0], view_vector[1], view_vector[2]]
+            light_vector = np.matmul(light_vector, y_matrix)
+            self.light_vector = [light_vector[0], light_vector[1], light_vector[2]]
+
+        if key == pygame.K_d:
+            y_rotation = 5
+            light_vector = [self.light_vector[0], self.light_vector[1], self.light_vector[2], 1]
+            y_matrix = np.array([[math.cos(math.radians(y_rotation)), 0, math.sin(math.radians(y_rotation)), 0],
+                                 [0, 1, 0, 0],
+                                 [-math.sin(math.radians(y_rotation)), 0, math.cos(math.radians(y_rotation)), 0],
+                                 [0, 0, 0, 1]])
+            light_vector = np.matmul(light_vector, y_matrix)
+            self.light_vector = [light_vector[0], light_vector[1], light_vector[2]]
 
         if key == pygame.K_w:
+            x_rotation = 5
+            light_vector = [self.light_vector[0], self.light_vector[1], self.light_vector[2], 1]
             x_matrix = np.array([[1, 0, 0, 0],
-                      [0, 1, 0, 0],
-                      [0, 0, 1, 0],
-                      [0, 0, 0, 1]])
+                                 [0, math.cos(math.radians(x_rotation)), -math.sin(math.radians(x_rotation)), 0],
+                                 [0, math.sin(math.radians(x_rotation)), math.cos(math.radians(x_rotation)), 0],
+                                 [0, 0, 0, 1]])
+            light_vector = np.matmul(light_vector, x_matrix)
+            self.light_vector = [light_vector[0], light_vector[1], light_vector[2]]
             # rotate up
 
 
         if key == pygame.K_s:
+            x_rotation = -5
+            light_vector = [self.light_vector[0], self.light_vector[1], self.light_vector[2], 1]
             x_matrix = np.array([[1, 0, 0, 0],
-                                 [0, 1, 0, 0],
-                                 [0, 0, 1, 0],
+                                 [0, math.cos(math.radians(x_rotation)), -math.sin(math.radians(x_rotation)), 0],
+                                 [0, math.sin(math.radians(x_rotation)), math.cos(math.radians(x_rotation)), 0],
                                  [0, 0, 0, 1]])
+            light_vector = np.matmul(light_vector, x_matrix)
+            self.light_vector = [light_vector[0], light_vector[1], light_vector[2]]
             # rotate down
 
         if key == pygame.K_q:
-            z_matrix = np.array([[1, 0, 0, 0],
-                                 [0, 1, 0, 0],
+            z_rotation = 5
+            light_vector = [self.light_vector[0], self.light_vector[1], self.light_vector[2], 1]
+            z_matrix = np.array([[math.cos(math.radians(z_rotation)), -math.sin(math.radians(z_rotation)), 0, 0],
+                                 [math.sin(math.radians(z_rotation)), math.cos(math.radians(z_rotation)), 0, 0],
                                  [0, 0, 1, 0],
                                  [0, 0, 0, 1]])
+            light_vector = np.matmul(light_vector, z_matrix)
+            self.light_vector = [light_vector[0], light_vector[1], light_vector[2]]
             #rotate counterclockwise
 
         if key == pygame.K_e:
-            z_matrix = np.array([[1, 0, 0, 0],
-                                 [0, 1, 0, 0],
+            z_rotation = -5
+            light_vector = [self.light_vector[0], self.light_vector[1], self.light_vector[2], 1]
+            z_matrix = np.array([[math.cos(math.radians(z_rotation)), -math.sin(math.radians(z_rotation)), 0, 0],
+                                 [math.sin(math.radians(z_rotation)), math.cos(math.radians(z_rotation)), 0, 0],
                                  [0, 0, 1, 0],
                                  [0, 0, 0, 1]])
+            light_vector = np.matmul(light_vector, z_matrix)
+            self.light_vector = [light_vector[0], light_vector[1], light_vector[2]]
             #rotate counterclockwise
 
-        print(self.view_vector)
-        print(y_rotation)
         return
 
     def run(self):
