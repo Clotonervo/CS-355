@@ -1,4 +1,4 @@
-""" Modified code from Peter Colling Ridge 
+""" Modified code from Peter Colling Ridge
 	Original found at http://www.petercollingridge.co.uk/pygame-3d-graphics-tutorial
 """
 
@@ -12,40 +12,40 @@ x_rotation = 0
 
 class WireframeViewer(wf.WireframeGroup):
     """ A group of wireframes which can be displayed on a Pygame screen """
-    
+
     def __init__(self, width, height, name="Wireframe Viewer"):
         self.width = width
         self.height = height
-        
+
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption(name)
-        
+
         self.wireframes = {}
         self.wireframe_colours = {}
         self.object_to_update = []
-        
+
         self.displayNodes = False
         self.displayEdges = True
         self.displayFaces = True
-        
+
         self.perspective = False
         self.eyeX = self.width/2
         self.eyeY = 100
         self.light_color = np.array([1,1,1])
-        self.view_vector = np.array([0, 0, -1])        
+        self.view_vector = np.array([0, 0, -1])
         self.light_vector = np.array([0, 0, -1])
 
         self.background = (10,10,50)
         self.nodeColour = (250,250,250)
         self.nodeRadius = 4
-        
+
         self.control = 0
-    
+
     def addWireframe(self, name, wireframe):
         self.wireframes[name] = wireframe
         #   If colour is set to None, then wireframe is not displayed
         self.wireframe_colours[name] = (250,250,250)
-    
+
     def addWireframeGroup(self, wireframe_group):
         # Potential danger of overwriting names
         for name, wireframe in wireframe_group.wireframes.items():
@@ -57,13 +57,13 @@ class WireframeViewer(wf.WireframeGroup):
 
     def getDot(self, l, n):
         return np.dot(l,n)
-    
+
     def display(self):
         self.screen.fill(self.background)
 
         for name, wireframe in self.wireframes.items():
             nodes = wireframe.nodes
-            
+
             if self.displayFaces:
                 for (face, colour) in wireframe.sortedFaces():
                     v1 = (nodes[face[1]] - nodes[face[0]])[:3]
@@ -77,7 +77,7 @@ class WireframeViewer(wf.WireframeGroup):
                     if towards_us > 0:
                         m_ambient = 0.1
                         ambient = self.light_color * (m_ambient * colour)
-                        m_diff = 0.4
+                        m_diff = 0.5
                         diffuse = (m_diff * colour) * self.getDot(self.light_vector, normal)
 
                         m_spec = 0.4
@@ -104,11 +104,11 @@ class WireframeViewer(wf.WireframeGroup):
                                 z1 = self.perspective/ (self.perspective + nodes[n1][2])
                                 x1 = self.width/2  + z1*(nodes[n1][0] - self.width/2)
                                 y1 = self.height/2 + z1*(nodes[n1][1] - self.height/2)
-                    
+
                                 z2 = self.perspective/ (self.perspective + nodes[n2][2])
                                 x2 = self.width/2  + z2*(nodes[n2][0] - self.width/2)
                                 y2 = self.height/2 + z2*(nodes[n2][1] - self.height/2)
-                                
+
                                 pygame.draw.aaline(self.screen, colour, (x1, y1), (x2, y2), 1)
                         else:
                             pygame.draw.aaline(self.screen, colour, (nodes[n1][0], nodes[n1][1]), (nodes[n2][0], nodes[n2][1]), 1)
@@ -116,7 +116,7 @@ class WireframeViewer(wf.WireframeGroup):
             if self.displayNodes:
                 for node in nodes:
                     pygame.draw.circle(self.screen, colour, (int(node[0]), int(node[1])), self.nodeRadius, 0)
-        
+
         pygame.display.flip()
 
     def keyEvent(self, key):
@@ -190,7 +190,7 @@ class WireframeViewer(wf.WireframeGroup):
 
     def run(self):
         """ Display wireframe on screen and respond to keydown events """
-        
+
         running = True
         key_down = False
         while running:
@@ -201,16 +201,16 @@ class WireframeViewer(wf.WireframeGroup):
                     key_down = event.key
                 elif event.type == pygame.KEYUP:
                     key_down = None
-            
+
             if key_down:
                 self.keyEvent(key_down)
-            
+
             self.display()
             self.update()
-            
+
         pygame.quit()
 
-		
+
 resolution = 52
 viewer = WireframeViewer(600, 400)
 viewer.addWireframe('sphere', shape.Spheroid((300,200, 20), (160,160,160), resolution=resolution))
@@ -222,6 +222,6 @@ for i in range(int(resolution/4)):
 		f = i*(resolution*4-8) +j
 		faces[f][1][1] = 0
 		faces[f][1][2] = 0
-	
+
 viewer.displayEdges = False
 viewer.run()
